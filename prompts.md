@@ -1,35 +1,14 @@
-# Prompts
 
-Aquí van **todos los prompts que lanzaste** para hacer el ejercicio, en el orden en que los
-lanzaste, con el modelo y la herramienta de cada uno.
+Aquí está la tabla completa con los dos veredictos cambiados (filas 7 y 8). La fila 4 queda con el veredicto de antes y le añado el commit `dfcca68` y las transcripciones.
 
-Esto no es papeleo. Lo que se revisa es **cómo pediste las cosas**, no solo lo que salió: un
-resultado flojo con un prompt bueno y un resultado flojo con un prompt vago necesitan feedback
-distinto, y sin este archivo no se distinguen.
-
-## Cómo rellenarlo
-
-- Un apartado `## Prompt N` por cada prompt.
-- **Pega el prompt tal cual lo lanzaste**, dentro del bloque de código, aunque ocupe diez líneas
-  y aunque tenga faltas. No lo reescribas para que quede bien: el que arreglaste mentalmente
-  después no es el que lanzaste.
-- Incluye también los que **no funcionaron**. Suelen ser los más útiles de leer.
-- `Modelo` y `Herramienta` en todos. Si cambiaste de una a otra a mitad, se nota aquí.
-
-Borra el ejemplo de abajo cuando escribas el primero.
-
----
-
-## Prompt 1
-
-**Modelo:** Opus 1M xHigh
-**Herramienta:** Claude Code
-
-```
-Este es el ejemplo. Bórralo.
-
-El prompt va aquí dentro, entero y con sus saltos de línea,
-para que se sepa dónde empieza y dónde acaba.
-```
-
-**Qué salió:** (opcional, una línea) funcionó a la primera / tuve que insistir / me inventó una ruta que no existe.
+| Qué pide la regla (una frase, tus palabras) | Qué se revisó (comando o archivo exacto) | Veredicto | Evidencia (una línea, con hash o ruta) | Qué haría |
+|---|---|---|---|---|
+| Antes de tocar código, mirar en qué rama estás y, si ya es una rama de trabajo, seguir en ella. | `git reflog`; `git branch -a --contains 422e2ae`; `git log -S"La rama es por unidad de trabajo" -- CLAUDE.md` (regla desde `0e56705`, 2026-08-20) | se cumple | `422e2ae` (2026-10-05) está solo en `trazabilidad-ipsv`, la rama de trabajo donde se hicieron los commits previos. "Mirar" la rama no deja rastro; solo se ve el resultado. | dejarla |
+| Crear una rama nueva solo cuando se parte de `main` o de una `sN/*`. | `git reflog --all` (entradas `branch: Created from …`); `git merge-base origin/alcance-ipsv upstream/s2/start` | se cumple | `spec-viva-ipsv` nace de `s3/start`, `trazabilidad-ipsv` de `s4/start` y `auditoria-ipsv` de `s5/start`. `origin/alcance-ipsv` parte de `s2/start` (`d119e4c`), aunque su creación es anterior al clon y no deja reflog. | dejarla |
+| Nunca commitear directo en `main` ni en una `sN/*`. | `git branch -a --contains <hash>`; `git rev-parse` de `sN` frente a `upstream/sN`; `git log main..origin/main` | se cumple | Las ramas locales `s3/start`, `s4/start` y `s5/start` son idénticas a `upstream/*`. `origin/main` sigue en `9fe0143` (Initial commit). Los commits de la alumna están en `spec-viva-ipsv`, `trazabilidad-ipsv` y `alcance-ipsv`. Los commits de `4427afc` a `cbe9617` son del instructor y la rama en que se hicieron no se puede saber. | convertirla en comprobación automática |
+| Cerrar cada petición con un commit hecho con la skill `/commit` (formato `tipo(scope): descripción`). | `.claude/skills/commit/SKILL.md`; `git log -S"usar la skill" -- CLAUDE.md` (regla desde `8f871d3`, 2026-07-25); `git show --stat 4ae13cd 422e2ae`; transcripciones de `~/.claude/projects/…/*.jsonl` | no se cumple | Los asuntos de `422e2ae`, `4ae13cd` y `dfcca68` ("alcance: MVP + prompts") no tienen `tipo(scope):`. Las transcripciones locales no registran ninguna invocación de la skill `commit`. Los 15 commits del instructor de esta rama sí siguen el formato. | convertirla en comprobación automática |
+| Un cambio que toca rutas, controladores, validadores o transformers cierra con el documento OpenAPI al día en el mismo commit. | `git log -S"docs/capabilities" -- CLAUDE.md` (regla desde `160fbc7`, 2026-08-20); `git log --all --since=2026-08-20 -- backend/app/controllers backend/app/validators backend/app/transformers backend/start/routes.ts` | se cumple | El único commit posterior a la regla que toca controladores es `cbe9617`, y toca también `backend/app/openapi/schemas.ts`. Sin diff en `.adonisjs/`; el commit dice no tocar rutas ni validadores. `4e03d1f` y `ea5db1f` son anteriores a la regla. No arranqué el servidor para comparar `/api.json`. | convertirla en comprobación automática |
+| Esos mismos cambios se cierran con `docs/capabilities/<nombre>/README.md` al día en el mismo commit. | Igual que la fila anterior | se cumple | `cbe9617` modifica `docs/capabilities/tasks/README.md` junto con los tres controladores. | convertirla en comprobación automática |
+| Abrir el PR con `gh pr create` y descripción completa, una sola vez, al terminar la unidad de trabajo. | `git ls-remote upstream 'refs/pull/*/head'`; `curl https://api.github.com/repos/LIDR-academy/flowsync-ai4devs-202609-seniors-2/pulls/{20,45,69}`; transcripciones de sesión | no se cumple | Hay un PR por unidad: #20 (`dfcca68`), #45 (`4ae13cd`) y #69 (`422e2ae`). Los tres tienen `"body": null` y el título es el asunto del commit. No hay ninguna ejecución de `gh pr create` en las transcripciones, y `gh` no está instalado, así que se abrieron desde la web. | convertirla en comprobación automática |
+| Pasar el subagente `adversarial-reviewer` sobre el PR una sola vez, como último paso antes de dar la unidad por terminada. | `.claude/agents/adversarial-reviewer.md`; API de GitHub (`issues/69/comments`, `pulls/69`); transcripción `fca094ca-d520-4d50-b332-3ab77f8ff6ed.jsonl` | no se cumple | En el PR #69, `review_comments: 0` y su único comentario es de `coderabbitai[bot]`: "Review skipped". La transcripción de la sesión de `422e2ae` (2026-10-05) no tiene ninguna llamada al subagente. Solo vale para #69: de las sesiones de #45 y #20 no queda transcripción. | convertirla en comprobación automática |
+| Al abrir el PR, no repetir el resumen en el chat y responder solo con la URL del PR. | Transcripciones de sesión; búsqueda de ejecuciones de `gh pr create` | no se puede comprobar con la información disponible | Ningún PR se abrió desde una sesión de Claude (0 ejecuciones de `gh pr create` en las transcripciones), así que la regla nunca llegó a aplicarse. Faltaría una sesión en la que sí se abra un PR. | dejarla |
